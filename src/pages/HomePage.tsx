@@ -52,12 +52,12 @@ export default function HomePage() {
     <PublicLayout>
       {/* Hero Section */}
       <section 
-        className="relative py-20 md:py-32 bg-cover bg-center bg-no-repeat"
+        className="relative py-20 md:py-32 bg-contain bg-center bg-no-repeat"
         style={{
           backgroundImage: 'url(https://miaoda-conversation-file.s3cdn.medo.dev/user-ahhdcbu0uby8/conv-ahhdeyjp6akg/20260325/file-ahmb2t6d9pts.jpg)'
         }}
       >
-        <div className="absolute inset-0 bg-background/70 backdrop-blur-sm"></div>
+        <div className="absolute inset-0 bg-background/50"></div>
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-3xl mx-auto text-center">
             {loading ? (
