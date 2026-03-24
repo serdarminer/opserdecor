@@ -51,8 +51,14 @@ export default function HomePage() {
   return (
     <PublicLayout>
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-primary/10 via-background to-secondary/10 py-20 md:py-32">
-        <div className="container mx-auto px-4">
+      <section 
+        className="relative py-20 md:py-32 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: 'url(https://miaoda-conversation-file.s3cdn.medo.dev/user-ahhdcbu0uby8/conv-ahhdeyjp6akg/20260325/file-ahmb2t6d9pts.jpg)'
+        }}
+      >
+        <div className="absolute inset-0 bg-background/70 backdrop-blur-sm"></div>
+        <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-3xl mx-auto text-center">
             {loading ? (
               <>
@@ -61,10 +67,10 @@ export default function HomePage() {
               </>
             ) : (
               <>
-                <h1 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">
+                <h1 className="text-4xl md:text-5xl font-bold mb-6 text-foreground drop-shadow-lg">
                   {heroContent ? (language === 'tr' ? heroContent.content_tr : heroContent.content_en) : 'OPSERDECOR'}
                 </h1>
-                <p className="text-lg md:text-xl text-muted-foreground mb-8">
+                <p className="text-lg md:text-xl text-foreground mb-8 drop-shadow-md">
                   {t(
                     'Mobilya, kapı, süpürgelik, parke ve MDF panel kaplamalarında kullanılan finish folyo, dekor kağıdı ve PP folyo ürünlerinde uzman çözümler sunuyoruz.',
                     'We offer expert solutions in finish foil, decorative paper and PP foil products used in furniture, door, baseboard, parquet and MDF panel coatings.'

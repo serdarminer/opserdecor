@@ -62,8 +62,11 @@ OPSERDECOR Web Sitesi
 ### 3.3 Ana Sayfa
 
 **Hero Bölümü**
-- Tam ekran görsel/slider ile marka tanıtımı
-- Başlık ve kısa açıklama metni
+- Arka plan görseli olarak kullanıcı tarafından yüklenen resim uygulanır
+  - Dosya adı: Dekorfinder.jpg
+  - Dosya bağlantısı: https://miaoda-conversation-file.s3cdn.medo.dev/user-ahhdcbu0uby8/conv-ahhdeyjp6akg/20260325/file-ahmb2t6d9pts.jpg
+  - Kullanım: Hero bölümünün tam ekran arka plan görseli olarak uygulanır; görsel ekrana sığacak şekilde kapsayıcı (cover) modda konumlandırılır
+- Başlık ve kısa açıklama metni (arka plan görseli üzerinde, okunabilirliği sağlamak için gerekirse yarı saydam katman eklenir)
 - Ürünlere veya İletişime yönlendiren CTA butonu
 
 **Ürün Kategorileri Özeti**
@@ -192,7 +195,7 @@ Referans: https://www.schattdecor.com/tr/dekorlar benzeri bir yapı
 - Mesaj silme
 
 **Site İçerik Yönetimi**
-- Ana Sayfa hero bölümü: başlık (TR/EN), açıklama (TR/EN), görsel güncelleme
+- Ana Sayfa hero bölümü: başlık (TR/EN), açıklama (TR/EN), arka plan görseli güncelleme
 - Hakkımızda sayfası içeriği: metin (TR/EN), görseller
 - Footer iletişim bilgileri güncelleme
 
@@ -237,6 +240,7 @@ Referans: https://www.schattdecor.com/tr/dekorlar benzeri bir yapı
 ## 6. Kabul Kriterleri
 
 - Tüm menü sayfaları (Ana Sayfa, Hakkımızda, Ürünler, Dekorlar, Haberler, İletişim) erişilebilir ve içerik görüntülenebilir olmalıdır
+- Ana Sayfa hero bölümünde Dekorfinder.jpg görseli arka plan olarak doğru şekilde uygulanmalıdır
 - Dil seçici TR/EN geçişi tüm sayfalarda sorunsuz çalışmalıdır
 - Dekorlar sayfasında filtreleme ve arama işlevleri doğru sonuç döndürmelidir
 - İletişim formu başarıyla gönderilmeli ve mesaj admin panelinde görünmelidir
