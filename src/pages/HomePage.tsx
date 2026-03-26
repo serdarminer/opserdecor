@@ -147,7 +147,7 @@ export default function HomePage() {
                           {productName}
                         </p>
                         <p
-                          className="text-sm max-w-xl leading-relaxed transition-all duration-300"
+                          className="text-sm max-w-xl leading-relaxed transition-all duration-300 line-clamp-3"
                           style={{
                             color: 'rgba(255,255,255,0.45)',
                             opacity: isActive ? 1 : 0.6,
