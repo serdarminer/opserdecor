@@ -1,1 +1,0 @@
-import{Y as e,rt as t,t as n}from"./index-zdjRV1FE.js";var r=t(e(),1);function i({className:e,...t}){return(0,r.jsx)(`div`,{className:n(`animate-pulse rounded-md bg-primary/10`,e),...t})}export{i as t};
