@@ -27,3 +27,13 @@ package-lock.json
 .sync
 history/*.json
 .vite_cache
+
+# Environment
+.env
+
+# SQLite database
+server/*.db
+
+# Uploads
+public/uploads/*
+!public/uploads/.gitkeep

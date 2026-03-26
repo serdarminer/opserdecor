@@ -28,12 +28,12 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="fixed top-0 z-50 w-full border-b border-white/10 bg-neutral-800/80 backdrop-blur-md">
       <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
+        <div className="flex h-32 items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="text-2xl font-bold text-primary">OPSERDECOR</div>
+          <Link to="/" className="flex items-center">
+            <img src="/images/logo/opser-logo.png.png" alt="OPSER" className="h-40 w-auto brightness-0 invert" />
           </Link>
 
           {/* Desktop Navigation */}
@@ -42,8 +42,8 @@ export function Header() {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`text-sm font-medium transition-colors hover:text-primary ${
-                  isActive(item.path) ? 'text-primary' : 'text-foreground'
+                className={`text-sm font-medium transition-colors hover:text-white/80 ${
+                  isActive(item.path) ? 'text-white' : 'text-white/60'
                 }`}
               >
                 {item.label}
@@ -54,11 +54,11 @@ export function Header() {
           {/* Right Section */}
           <div className="flex items-center space-x-4">
             {/* Language Switcher */}
-            <div className="flex items-center space-x-1 border border-border rounded-md">
+            <div className="flex items-center space-x-1 border border-white/20 rounded-md">
               <button
                 onClick={() => setLanguage('tr')}
                 className={`px-3 py-1 text-sm font-medium transition-colors ${
-                  language === 'tr' ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-accent'
+                  language === 'tr' ? 'bg-white text-black' : 'text-white/60 hover:text-white'
                 }`}
               >
                 TR
@@ -66,7 +66,7 @@ export function Header() {
               <button
                 onClick={() => setLanguage('en')}
                 className={`px-3 py-1 text-sm font-medium transition-colors ${
-                  language === 'en' ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-accent'
+                  language === 'en' ? 'bg-white text-black' : 'text-white/60 hover:text-white'
                 }`}
               >
                 EN

@@ -4,7 +4,6 @@ import react from "@vitejs/plugin-react";
 import svgr from "vite-plugin-svgr";
 import path from "path";
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
@@ -22,4 +21,10 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  server: {
+    proxy: {
+      '/api': 'http://localhost:3001',
+      '/uploads': 'http://localhost:3001',
+    }
+  }
 });

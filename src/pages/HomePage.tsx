@@ -1,32 +1,45 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { PublicLayout } from '@/components/layouts/PublicLayout';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getProducts, getDecors, getPublishedNews, getSiteContentByKey } from '@/db/api';
-import type { Product, Decor, News, SiteContent } from '@/types';
-import { ArrowRight, Package, Palette, Newspaper } from 'lucide-react';
+import { getProducts, getDecors, getPublishedNews } from '@/db/api';
+import type { Product, Decor, News } from '@/types';
+import { ArrowRight, Palette } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Newspaper } from 'lucide-react';
+
+const CATEGORY_LABELS: Record<string, { tr: string; en: string }> = {
+  finish_foil: { tr: 'Finish Folyo', en: 'Finish Foil' },
+  decorative_paper: { tr: 'Dekor Kağıdı', en: 'Decorative Paper' },
+  pp_foil: { tr: 'PP Folyo', en: 'PP Foil' },
+};
+
+const CATEGORY_BG: Record<string, string> = {
+  finish_foil: '/images/photos/ffoil.jpg',
+  decorative_paper: '/images/photos/decor1.jpg',
+  pp_foil: '/images/photos/ppfoil.jpg',
+};
 
 export default function HomePage() {
   const { language, t } = useLanguage();
-  const [heroContent, setHeroContent] = useState<SiteContent | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [decors, setDecors] = useState<Decor[]>([]);
   const [news, setNews] = useState<News[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const heroRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function loadData() {
       try {
-        const [heroData, productsData, decorsData, newsData] = await Promise.all([
-          getSiteContentByKey('hero_title'),
+        const [productsData, decorsData, newsData] = await Promise.all([
           getProducts(),
           getDecors(),
-          getPublishedNews(3)
+          getPublishedNews(3),
         ]);
-        setHeroContent(heroData);
         setProducts(productsData);
         setDecors(decorsData.slice(0, 6));
         setNews(newsData);
@@ -39,129 +52,148 @@ export default function HomePage() {
     loadData();
   }, []);
 
-  const getCategoryName = (category: string) => {
-    const names: Record<string, { tr: string; en: string }> = {
-      finish_foil: { tr: 'Finish Folyo', en: 'Finish Foil' },
-      decorative_paper: { tr: 'Dekor Kağıdı', en: 'Decorative Paper' },
-      pp_foil: { tr: 'PP Folyo', en: 'PP Foil' }
-    };
-    return language === 'tr' ? names[category]?.tr : names[category]?.en;
-  };
+  const activeProduct = activeIndex !== null ? products[activeIndex] : null;
 
   return (
     <PublicLayout>
-      {/* Hero Section */}
-      <section 
-        className="relative py-20 md:py-32 bg-contain bg-center bg-no-repeat"
-        style={{
-          backgroundImage: 'url(https://miaoda-conversation-file.s3cdn.medo.dev/user-ahhdcbu0uby8/conv-ahhdeyjp6akg/20260325/file-ahmb2t6d9pts.jpg)'
-        }}
+      {/* Interactive Hero / Products Section */}
+      <section
+        ref={heroRef}
+        className="relative min-h-screen overflow-hidden"
+        style={{ backgroundImage: "url('/images/photos/woodgrain.jpg')", backgroundSize: 'cover', backgroundPosition: 'center' }}
+        onMouseMove={(e) => setMousePos({ x: e.clientX, y: e.clientY })}
       >
-        <div className="absolute inset-0 bg-background/50"></div>
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-3xl mx-auto text-center">
-            {loading ? (
-              <>
-                <Skeleton className="h-12 w-3/4 mx-auto mb-6 bg-muted" />
-                <Skeleton className="h-6 w-full mb-8 bg-muted" />
-              </>
-            ) : (
-              <>
-                <h1 className="text-4xl md:text-5xl font-bold mb-6 text-foreground drop-shadow-lg">
-                  {heroContent ? (language === 'tr' ? heroContent.content_tr : heroContent.content_en) : 'OPSERDECOR'}
-                </h1>
-                <p className="text-lg md:text-xl text-foreground mb-8 drop-shadow-md">
-                  {t(
-                    'Mobilya, kapı, süpürgelik, parke ve MDF panel kaplamalarında kullanılan finish folyo, dekor kağıdı ve PP folyo ürünlerinde uzman çözümler sunuyoruz.',
-                    'We offer expert solutions in finish foil, decorative paper and PP foil products used in furniture, door, baseboard, parquet and MDF panel coatings.'
-                  )}
-                </p>
-              </>
-            )}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/products">
-                <Button size="lg" asChild>
-                  <span>
-                    {t('Ürünlerimizi İnceleyin', 'Explore Our Products')}
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </span>
-                </Button>
-              </Link>
-              <Link to="/contact">
-                <Button size="lg" variant="outline" asChild>
-                  <span>{t('İletişime Geçin', 'Contact Us')}</span>
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+        {/* Background images per product */}
+        {products.map((product, i) => {
+          const bgImage = CATEGORY_BG[product.category] ?? product.image_url;
+          return (
+            <div
+              key={product.id}
+              className="absolute inset-0 bg-cover bg-center transition-opacity duration-700 ease-in-out"
+              style={{
+                backgroundImage: bgImage ? `url(${bgImage})` : undefined,
+                opacity: activeIndex === i ? 1 : 0,
+                zIndex: 0,
+              }}
+            />
+          );
+        })}
 
-      {/* Products Section */}
-      <section className="py-16 bg-background">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-foreground">
+        {/* Gradient overlay */}
+        <div
+          className="absolute inset-0 transition-opacity duration-700"
+          style={{
+            background: 'linear-gradient(to right, rgba(0,0,0,0.88) 45%, rgba(0,0,0,0.25) 100%)',
+            zIndex: 1,
+          }}
+        />
+
+        {/* Content */}
+        <div className="relative z-10 flex flex-col justify-center min-h-screen px-8 md:px-20 py-28 -mt-32">
+          {/* Heading */}
+          <div className="mb-10">
+            <p className="text-neutral-400 text-xs uppercase tracking-[0.25em] mb-2">
               {t('Ürün Kategorilerimiz', 'Our Product Categories')}
-            </h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              {t(
-                'Geniş ürün yelpazemiz ile her türlü ihtiyacınıza çözüm sunuyoruz.',
-                'We offer solutions for all your needs with our wide product range.'
-              )}
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {loading ? (
-              Array.from({ length: 3 }).map((_, i) => (
-                <Card key={i}>
-                  <CardHeader>
-                    <Skeleton className="h-6 w-3/4 mb-2 bg-muted" />
-                    <Skeleton className="h-4 w-full bg-muted" />
-                  </CardHeader>
-                  <CardContent>
-                    <Skeleton className="h-40 w-full bg-muted" />
-                  </CardContent>
-                </Card>
-              ))
-            ) : (
-              products.map((product) => (
-                <Link key={product.id} to={`/products/${product.id}`}>
-                  <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
-                    <CardHeader>
-                      <div className="flex items-center space-x-2 mb-2">
-                        <Package className="h-5 w-5 text-primary" />
-                        <CardTitle>{getCategoryName(product.category)}</CardTitle>
-                      </div>
-                      <CardDescription>
-                        {language === 'tr' ? product.description_tr : product.description_en}
-                      </CardDescription>
-                    </CardHeader>
-                    {product.image_url && (
-                      <CardContent>
-                        <img
-                          src={product.image_url}
-                          alt={getCategoryName(product.category) || ''}
-                          className="w-full h-48 object-cover rounded-md"
-                        />
-                      </CardContent>
-                    )}
-                  </Card>
-                </Link>
-              ))
-            )}
-          </div>
+          {/* Product list */}
+          {loading ? (
+            <div className="space-y-6">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-14 w-2/3 bg-white/10" />
+              ))}
+            </div>
+          ) : (
+            <ul className="divide-y divide-white/10">
+              {products.map((product, i) => {
+                const isActive = activeIndex === i;
+                const label = CATEGORY_LABELS[product.category];
+                const categoryName = language === 'tr' ? label?.tr : label?.en;
+                const productName = language === 'tr' ? product.name_tr : product.name_en;
+                const description = language === 'tr' ? product.description_tr : product.description_en;
 
-          <div className="text-center mt-8">
-            <Button variant="outline" asChild>
-              <Link to="/products">
-                {t('Tüm Ürünleri Görüntüle', 'View All Products')}
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
+                return (
+                  <li key={product.id}>
+                    <Link
+                      to={`/products/${product.id}`}
+                      className="flex items-start gap-6 py-8 md:py-10 group"
+                      onMouseEnter={() => setActiveIndex(i)}
+                      onMouseLeave={() => setActiveIndex(null)}
+                    >
+                      {/* Number */}
+                      <span
+                        className="text-sm w-10 shrink-0 mt-1 transition-colors duration-300"
+                        style={{ color: isActive ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.2)' }}
+                      >
+                        {String(i + 1).padStart(2, '0')}.
+                      </span>
+
+                      {/* Text block */}
+                      <div
+                        className="transition-all duration-300"
+                        style={{ transform: isActive ? 'translateX(8px)' : 'translateX(0)' }}
+                      >
+                        <p
+                          className="text-xs uppercase tracking-widest mb-1 transition-colors duration-300"
+                          style={{ color: isActive ? '#7eb8d4' : 'rgba(255,255,255,0.3)' }}
+                        >
+                          {categoryName}
+                        </p>
+                        <p
+                          className="text-4xl md:text-6xl font-bold tracking-tight mb-2 transition-colors duration-300"
+                          style={{ color: isActive ? '#ffffff' : 'rgba(255,255,255,0.55)' }}
+                        >
+                          {productName}
+                        </p>
+                        <p
+                          className="text-sm max-w-xl leading-relaxed transition-all duration-300"
+                          style={{
+                            color: 'rgba(255,255,255,0.45)',
+                            opacity: isActive ? 1 : 0.6,
+                          }}
+                        >
+                          {description}
+                        </p>
+                      </div>
+
+                      {/* Arrow */}
+                      <span
+                        className="ml-auto text-white text-xl mt-2 shrink-0 transition-all duration-300"
+                        style={{
+                          opacity: isActive ? 1 : 0,
+                          transform: isActive ? 'translateX(0)' : 'translateX(-10px)',
+                        }}
+                      >
+                        →
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
+
         </div>
+
+        {/* Floating cursor image */}
+        {activeProduct && (
+          <div
+            className="pointer-events-none fixed z-50 w-48 h-32 md:w-64 md:h-44 rounded-xl overflow-hidden shadow-2xl transition-opacity duration-300"
+            style={{
+              left: mousePos.x + 28,
+              top: mousePos.y - 70,
+              opacity: activeIndex !== null ? 1 : 0,
+            }}
+          >
+            <img
+              src={CATEGORY_BG[activeProduct.category] ?? activeProduct.image_url ?? ''}
+              alt={language === 'tr' ? activeProduct.name_tr : activeProduct.name_en}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
       </section>
 
       {/* Featured Decors Section */}
@@ -172,35 +204,30 @@ export default function HomePage() {
               {t('Öne Çıkan Dekorlar', 'Featured Decors')}
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              {t(
-                'Geniş dekor koleksiyonumuzdan seçili tasarımlar.',
-                'Selected designs from our extensive decor collection.'
-              )}
+              {t('Geniş dekor koleksiyonumuzdan seçili tasarımlar.', 'Selected designs from our extensive decor collection.')}
             </p>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {loading ? (
-              Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="aspect-square bg-muted" />
-              ))
-            ) : (
-              decors.map((decor) => (
-                <Link key={decor.id} to={`/decors/${decor.id}`}>
-                  <div className="group cursor-pointer">
-                    <div className="aspect-square rounded-lg overflow-hidden border border-border bg-card">
-                      <img
-                        src={decor.image_url}
-                        alt={decor.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                      />
+            {loading
+              ? Array.from({ length: 6 }).map((_, i) => (
+                  <Skeleton key={i} className="aspect-square bg-muted" />
+                ))
+              : decors.map((decor) => (
+                  <Link key={decor.id} to={`/decors/${decor.id}`}>
+                    <div className="group cursor-pointer">
+                      <div className="aspect-square rounded-lg overflow-hidden border border-border bg-card">
+                        <img
+                          src={decor.image_url}
+                          alt={decor.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        />
+                      </div>
+                      <p className="mt-2 text-sm font-medium text-center text-foreground">{decor.name}</p>
+                      <p className="text-xs text-center text-muted-foreground">{decor.code}</p>
                     </div>
-                    <p className="mt-2 text-sm font-medium text-center text-foreground">{decor.name}</p>
-                    <p className="text-xs text-center text-muted-foreground">{decor.code}</p>
-                  </div>
-                </Link>
-              ))
-            )}
+                  </Link>
+                ))}
           </div>
 
           <div className="text-center mt-8">
@@ -227,45 +254,43 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {loading ? (
-              Array.from({ length: 3 }).map((_, i) => (
-                <Card key={i}>
-                  <Skeleton className="h-48 w-full bg-muted" />
-                  <CardHeader>
-                    <Skeleton className="h-6 w-3/4 mb-2 bg-muted" />
-                    <Skeleton className="h-4 w-full bg-muted" />
-                  </CardHeader>
-                </Card>
-              ))
-            ) : (
-              news.map((item) => (
-                <Link key={item.id} to={`/news/${item.id}`}>
-                  <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
-                    {item.cover_image_url && (
-                      <img
-                        src={item.cover_image_url}
-                        alt={language === 'tr' ? item.title_tr : item.title_en}
-                        className="w-full h-48 object-cover"
-                      />
-                    )}
+            {loading
+              ? Array.from({ length: 3 }).map((_, i) => (
+                  <Card key={i}>
+                    <Skeleton className="h-48 w-full bg-muted" />
                     <CardHeader>
-                      <div className="flex items-center space-x-2 mb-2">
-                        <Newspaper className="h-4 w-4 text-primary" />
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(item.published_date).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US')}
-                        </span>
-                      </div>
-                      <CardTitle className="line-clamp-2">
-                        {language === 'tr' ? item.title_tr : item.title_en}
-                      </CardTitle>
-                      <CardDescription className="line-clamp-3">
-                        {language === 'tr' ? item.content_tr.substring(0, 150) : item.content_en.substring(0, 150)}...
-                      </CardDescription>
+                      <Skeleton className="h-6 w-3/4 mb-2 bg-muted" />
+                      <Skeleton className="h-4 w-full bg-muted" />
                     </CardHeader>
                   </Card>
-                </Link>
-              ))
-            )}
+                ))
+              : news.map((item) => (
+                  <Link key={item.id} to={`/news/${item.id}`}>
+                    <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
+                      {item.cover_image_url && (
+                        <img
+                          src={item.cover_image_url}
+                          alt={language === 'tr' ? item.title_tr : item.title_en}
+                          className="w-full h-48 object-cover"
+                        />
+                      )}
+                      <CardHeader>
+                        <div className="flex items-center space-x-2 mb-2">
+                          <Newspaper className="h-4 w-4 text-primary" />
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(item.published_date).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US')}
+                          </span>
+                        </div>
+                        <CardTitle className="line-clamp-2">
+                          {language === 'tr' ? item.title_tr : item.title_en}
+                        </CardTitle>
+                        <CardDescription className="line-clamp-3">
+                          {language === 'tr' ? item.content_tr.substring(0, 150) : item.content_en.substring(0, 150)}...
+                        </CardDescription>
+                      </CardHeader>
+                    </Card>
+                  </Link>
+                ))}
           </div>
 
           <div className="text-center mt-8">

@@ -12,6 +12,7 @@ const NewsPage = lazy(() => import('./pages/NewsPage'));
 const NewsDetailPage = lazy(() => import('./pages/NewsDetailPage'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
+const InteractivePortfolioPage = lazy(() => import('./pages/InteractivePortfolioPage'));
 
 // Admin pages
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
@@ -20,6 +21,9 @@ const AdminDecors = lazy(() => import('./pages/admin/AdminDecors'));
 const AdminNews = lazy(() => import('./pages/admin/AdminNews'));
 const AdminMessages = lazy(() => import('./pages/admin/AdminMessages'));
 const AdminSiteContent = lazy(() => import('./pages/admin/AdminSiteContent'));
+const AdminProductForm = lazy(() => import('./pages/admin/AdminProductForm'));
+const AdminDecorForm = lazy(() => import('./pages/admin/AdminDecorForm'));
+const AdminNewsForm = lazy(() => import('./pages/admin/AdminNewsForm'));
 
 interface RouteConfig {
   name: string;
@@ -78,6 +82,12 @@ const routes: RouteConfig[] = [
     visible: false
   },
   {
+    name: 'Portfolio',
+    path: '/portfolio',
+    element: <InteractivePortfolioPage />,
+    visible: true
+  },
+  {
     name: 'Contact',
     path: '/contact',
     element: <ContactPage />,
@@ -102,15 +112,51 @@ const routes: RouteConfig[] = [
     visible: false
   },
   {
+    name: 'Admin Product New',
+    path: '/admin/products/new',
+    element: <AdminProductForm />,
+    visible: false
+  },
+  {
+    name: 'Admin Product Edit',
+    path: '/admin/products/:id/edit',
+    element: <AdminProductForm />,
+    visible: false
+  },
+  {
     name: 'Admin Decors',
     path: '/admin/decors',
     element: <AdminDecors />,
     visible: false
   },
   {
+    name: 'Admin Decor New',
+    path: '/admin/decors/new',
+    element: <AdminDecorForm />,
+    visible: false
+  },
+  {
+    name: 'Admin Decor Edit',
+    path: '/admin/decors/:id/edit',
+    element: <AdminDecorForm />,
+    visible: false
+  },
+  {
     name: 'Admin News',
     path: '/admin/news',
     element: <AdminNews />,
+    visible: false
+  },
+  {
+    name: 'Admin News New',
+    path: '/admin/news/new',
+    element: <AdminNewsForm />,
+    visible: false
+  },
+  {
+    name: 'Admin News Edit',
+    path: '/admin/news/:id/edit',
+    element: <AdminNewsForm />,
     visible: false
   },
   {

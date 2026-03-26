@@ -1,289 +1,141 @@
-import { supabase } from './supabase';
 import type { Product, Decor, News, ContactMessage, SiteContent, DecorFilters } from '@/types';
 
-// Products API
-export async function getProducts() {
-  const { data, error } = await supabase
-    .from('products')
-    .select('*')
-    .order('display_order', { ascending: true });
+const BASE = import.meta.env.VITE_API_URL || '';
 
-  if (error) throw error;
-  return Array.isArray(data) ? data : [];
+function getToken() {
+  return localStorage.getItem('opser_token') || '';
 }
 
-export async function getProductById(id: string) {
-  const { data, error } = await supabase
-    .from('products')
-    .select('*')
-    .eq('id', id)
-    .maybeSingle();
-
-  if (error) throw error;
-  return data;
-}
-
-export async function createProduct(product: Omit<Product, 'id' | 'created_at' | 'updated_at'>) {
-  const { data, error } = await supabase
-    .from('products')
-    .insert(product)
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
-}
-
-export async function updateProduct(id: string, product: Partial<Product>) {
-  const { data, error } = await supabase
-    .from('products')
-    .update({ ...product, updated_at: new Date().toISOString() })
-    .eq('id', id)
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
-}
-
-export async function deleteProduct(id: string) {
-  const { error } = await supabase
-    .from('products')
-    .delete()
-    .eq('id', id);
-
-  if (error) throw error;
-}
-
-// Decors API
-export async function getDecors(filters?: DecorFilters) {
-  let query = supabase
-    .from('decors')
-    .select('*')
-    .order('display_order', { ascending: true });
-
-  if (filters?.productType && filters.productType !== 'all') {
-    query = query.or(`compatible_product_type.eq.${filters.productType},compatible_product_type.eq.all`);
+async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const token = getToken();
+  const res = await fetch(`${BASE}${path}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options.headers || {}),
+    },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error || 'Request failed');
   }
-
-  if (filters?.colorGroup) {
-    query = query.eq('color_group', filters.colorGroup);
-  }
-
-  if (filters?.patternCategory) {
-    query = query.eq('pattern_category', filters.patternCategory);
-  }
-
-  if (filters?.search) {
-    query = query.or(`name.ilike.%${filters.search}%,code.ilike.%${filters.search}%`);
-  }
-
-  const { data, error } = await query;
-
-  if (error) throw error;
-  return Array.isArray(data) ? data : [];
+  return res.json();
 }
 
-export async function getDecorById(id: string) {
-  const { data, error } = await supabase
-    .from('decors')
-    .select('*')
-    .eq('id', id)
-    .maybeSingle();
-
-  if (error) throw error;
-  return data;
+// Auth
+export async function loginWithCredentials(username: string, password: string) {
+  return request<{ token: string; user: { id: string; username: string } }>('/api/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ username, password }),
+  });
 }
 
-export async function createDecor(decor: Omit<Decor, 'id' | 'created_at' | 'updated_at'>) {
-  const { data, error } = await supabase
-    .from('decors')
-    .insert(decor)
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
+// Products
+export async function getProducts(): Promise<Product[]> {
+  return request<Product[]>('/api/products');
 }
 
-export async function updateDecor(id: string, decor: Partial<Decor>) {
-  const { data, error } = await supabase
-    .from('decors')
-    .update({ ...decor, updated_at: new Date().toISOString() })
-    .eq('id', id)
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
+export async function getProductById(id: string): Promise<Product | null> {
+  return request<Product | null>(`/api/products/${id}`);
 }
 
-export async function deleteDecor(id: string) {
-  const { error } = await supabase
-    .from('decors')
-    .delete()
-    .eq('id', id);
-
-  if (error) throw error;
+export async function createProduct(product: Omit<Product, 'id' | 'created_at' | 'updated_at'>): Promise<Product> {
+  return request<Product>('/api/products', { method: 'POST', body: JSON.stringify(product) });
 }
 
-// News API
-export async function getPublishedNews(limit?: number) {
-  let query = supabase
-    .from('news')
-    .select('*')
-    .eq('status', 'published')
-    .order('published_date', { ascending: false });
-
-  if (limit) {
-    query = query.limit(limit);
-  }
-
-  const { data, error } = await query;
-
-  if (error) throw error;
-  return Array.isArray(data) ? data : [];
+export async function updateProduct(id: string, product: Partial<Product>): Promise<Product> {
+  return request<Product>(`/api/products/${id}`, { method: 'PUT', body: JSON.stringify(product) });
 }
 
-export async function getAllNews() {
-  const { data, error } = await supabase
-    .from('news')
-    .select('*')
-    .order('published_date', { ascending: false });
-
-  if (error) throw error;
-  return Array.isArray(data) ? data : [];
+export async function deleteProduct(id: string): Promise<void> {
+  await request(`/api/products/${id}`, { method: 'DELETE' });
 }
 
-export async function getNewsById(id: string) {
-  const { data, error } = await supabase
-    .from('news')
-    .select('*')
-    .eq('id', id)
-    .maybeSingle();
-
-  if (error) throw error;
-  return data;
+// Decors
+export async function getDecors(filters?: DecorFilters): Promise<Decor[]> {
+  const params = new URLSearchParams();
+  if (filters?.productType) params.set('productType', filters.productType);
+  if (filters?.colorGroup) params.set('colorGroup', filters.colorGroup);
+  if (filters?.patternCategory) params.set('patternCategory', filters.patternCategory);
+  if (filters?.search) params.set('search', filters.search);
+  const qs = params.toString();
+  return request<Decor[]>(`/api/decors${qs ? `?${qs}` : ''}`);
 }
 
-export async function createNews(news: Omit<News, 'id' | 'created_at' | 'updated_at'>) {
-  const { data, error } = await supabase
-    .from('news')
-    .insert(news)
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
+export async function getDecorById(id: string): Promise<Decor | null> {
+  return request<Decor | null>(`/api/decors/${id}`);
 }
 
-export async function updateNews(id: string, news: Partial<News>) {
-  const { data, error } = await supabase
-    .from('news')
-    .update({ ...news, updated_at: new Date().toISOString() })
-    .eq('id', id)
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
+export async function createDecor(decor: Omit<Decor, 'id' | 'created_at' | 'updated_at'>): Promise<Decor> {
+  return request<Decor>('/api/decors', { method: 'POST', body: JSON.stringify(decor) });
 }
 
-export async function deleteNews(id: string) {
-  const { error } = await supabase
-    .from('news')
-    .delete()
-    .eq('id', id);
-
-  if (error) throw error;
+export async function updateDecor(id: string, decor: Partial<Decor>): Promise<Decor> {
+  return request<Decor>(`/api/decors/${id}`, { method: 'PUT', body: JSON.stringify(decor) });
 }
 
-// Contact Messages API
-export async function createContactMessage(message: Omit<ContactMessage, 'id' | 'is_read' | 'created_at'>) {
-  const { data, error } = await supabase
-    .from('contact_messages')
-    .insert(message)
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
+export async function deleteDecor(id: string): Promise<void> {
+  await request(`/api/decors/${id}`, { method: 'DELETE' });
 }
 
-export async function getContactMessages() {
-  const { data, error } = await supabase
-    .from('contact_messages')
-    .select('*')
-    .order('created_at', { ascending: false });
-
-  if (error) throw error;
-  return Array.isArray(data) ? data : [];
+// News
+export async function getPublishedNews(limit?: number): Promise<News[]> {
+  const qs = limit ? `?limit=${limit}` : '';
+  return request<News[]>(`/api/news${qs}`);
 }
 
-export async function markMessageAsRead(id: string) {
-  const { error } = await supabase
-    .from('contact_messages')
-    .update({ is_read: true })
-    .eq('id', id);
-
-  if (error) throw error;
+export async function getAllNews(): Promise<News[]> {
+  return request<News[]>('/api/news?all=true');
 }
 
-export async function deleteContactMessage(id: string) {
-  const { error } = await supabase
-    .from('contact_messages')
-    .delete()
-    .eq('id', id);
-
-  if (error) throw error;
+export async function getNewsById(id: string): Promise<News | null> {
+  return request<News | null>(`/api/news/${id}`);
 }
 
-// Site Content API
-export async function getSiteContent() {
-  const { data, error } = await supabase
-    .from('site_content')
-    .select('*');
-
-  if (error) throw error;
-  return Array.isArray(data) ? data : [];
+export async function createNews(news: Omit<News, 'id' | 'created_at' | 'updated_at'>): Promise<News> {
+  return request<News>('/api/news', { method: 'POST', body: JSON.stringify(news) });
 }
 
-export async function getSiteContentByKey(key: string) {
-  const { data, error } = await supabase
-    .from('site_content')
-    .select('*')
-    .eq('key', key)
-    .maybeSingle();
-
-  if (error) throw error;
-  return data;
+export async function updateNews(id: string, news: Partial<News>): Promise<News> {
+  return request<News>(`/api/news/${id}`, { method: 'PUT', body: JSON.stringify(news) });
 }
 
-export async function updateSiteContent(key: string, content: Partial<SiteContent>) {
-  const { data, error } = await supabase
-    .from('site_content')
-    .update({ ...content, updated_at: new Date().toISOString() })
-    .eq('key', key)
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
+export async function deleteNews(id: string): Promise<void> {
+  await request(`/api/news/${id}`, { method: 'DELETE' });
 }
 
-// Statistics API for Admin Dashboard
-export async function getStatistics() {
-  const [products, decors, news, messages] = await Promise.all([
-    supabase.from('products').select('id', { count: 'exact', head: true }),
-    supabase.from('decors').select('id', { count: 'exact', head: true }),
-    supabase.from('news').select('id', { count: 'exact', head: true }),
-    supabase.from('contact_messages').select('id', { count: 'exact', head: true })
-  ]);
+// Contact Messages
+export async function createContactMessage(message: Omit<ContactMessage, 'id' | 'is_read' | 'created_at'>): Promise<ContactMessage> {
+  return request<ContactMessage>('/api/messages', { method: 'POST', body: JSON.stringify(message) });
+}
 
-  return {
-    products: products.count || 0,
-    decors: decors.count || 0,
-    news: news.count || 0,
-    messages: messages.count || 0
-  };
+export async function getContactMessages(): Promise<ContactMessage[]> {
+  return request<ContactMessage[]>('/api/messages');
+}
+
+export async function markMessageAsRead(id: string): Promise<void> {
+  await request(`/api/messages/${id}/read`, { method: 'PATCH' });
+}
+
+export async function deleteContactMessage(id: string): Promise<void> {
+  await request(`/api/messages/${id}`, { method: 'DELETE' });
+}
+
+// Site Content
+export async function getSiteContent(): Promise<SiteContent[]> {
+  return request<SiteContent[]>('/api/site-content');
+}
+
+export async function getSiteContentByKey(key: string): Promise<SiteContent | null> {
+  return request<SiteContent | null>(`/api/site-content/${key}`);
+}
+
+export async function updateSiteContent(key: string, content: Partial<SiteContent>): Promise<SiteContent> {
+  return request<SiteContent>(`/api/site-content/${key}`, { method: 'PUT', body: JSON.stringify(content) });
+}
+
+// Statistics
+export async function getStatistics(): Promise<{ products: number; decors: number; news: number; messages: number }> {
+  return request('/api/stats');
 }
