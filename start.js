@@ -1,14 +1,11 @@
 const { execSync } = require('child_process');
 const path = require('path');
+const fs = require('fs');
 
-// Install server dependencies if needed
-const serverDir = path.join(__dirname, 'server');
-try {
-  require(path.join(serverDir, 'node_modules', 'express'));
-} catch {
+const serverModules = path.join(__dirname, 'server', 'node_modules');
+if (!fs.existsSync(path.join(serverModules, 'express'))) {
   console.log('Installing server dependencies...');
-  execSync('npm install', { cwd: serverDir, stdio: 'inherit' });
+  execSync('npm install --production', { cwd: path.join(__dirname, 'server'), stdio: 'inherit' });
 }
 
-// Start the server
 require('./server/index.js');

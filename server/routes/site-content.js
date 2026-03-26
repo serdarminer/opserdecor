@@ -1,26 +1,20 @@
 const router = require('express').Router();
-const db = require('../db');
+const { readTable, writeTable } = require('../db');
 const { authMiddleware } = require('../middleware/auth');
 
-router.get('/', (req, res) => {
-  try {
-    res.json(db.prepare('SELECT * FROM site_content').all());
-  } catch (err) { res.status(500).json({ error: err.message }); }
-});
+router.get('/', (req, res) => { res.json(readTable('site_content')); });
 
 router.get('/:key', (req, res) => {
-  try {
-    res.json(db.prepare('SELECT * FROM site_content WHERE key = ?').get(req.params.key) || null);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  res.json(readTable('site_content').find(s => s.key === req.params.key) || null);
 });
 
 router.put('/:key', authMiddleware, (req, res) => {
-  const { content_tr, content_en, image_url } = req.body;
-  try {
-    db.prepare("UPDATE site_content SET content_tr=?, content_en=?, image_url=?, updated_at=datetime('now') WHERE key=?")
-      .run(content_tr, content_en, image_url, req.params.key);
-    res.json(db.prepare('SELECT * FROM site_content WHERE key = ?').get(req.params.key));
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  const rows = readTable('site_content');
+  const idx = rows.findIndex(s => s.key === req.params.key);
+  if (idx === -1) return res.status(404).json({ error: 'Not found' });
+  rows[idx] = { ...rows[idx], ...req.body, updated_at: new Date().toISOString() };
+  writeTable('site_content', rows);
+  res.json(rows[idx]);
 });
 
 module.exports = router;
